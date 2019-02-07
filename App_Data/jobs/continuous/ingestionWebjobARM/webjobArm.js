@@ -313,9 +313,13 @@ function checkMessageCount(queueName) {
     });
 }
 
-var devConnStr = "Endpoint=sb://servicebusnamespace-acme2.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=b6jCVPHPxK0VDTlAkdWHUIa1g0V19oZWESdLG3U42+8=";
-var connStr = process.env.SERVICE_BUS_CONNECTION_STRING || devConnStr;
-var queueName = process.env.SERVICE_QUEUE || 'servicebusqueue1-acme2';
+
+
+// BB Todo: devConnStr and queueName must be a parameter as they are unique to each installation.
+// devConnStr is the connection string to the Service Bus Namespace.
+//var devConnStr = "Endpoint=sb://servicebusnamespace-acme2.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=b6jCVPHPxK0VDTlAkdWHUIa1g0V19oZWESdLG3U42+8=";
+var connStr = process.env.SERVICE_BUS_CONNECTION_STRING; // || devConnStr;
+var queueName = process.env.SERVICE_QUEUE; // || 'servicebusqueue1-acme2';
 
 console.log(getCurrentDateTime(), 'Connecting to ' + connStr + ' and queue ' + queueName);
 
