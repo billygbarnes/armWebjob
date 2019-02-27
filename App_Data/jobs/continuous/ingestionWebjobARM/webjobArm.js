@@ -287,7 +287,8 @@ function checkForMessages(sbService, queueName, callback) {
             } else {
                 console.log(getCurrentDateTime(), 'Redigate Complete Payload: ', JSON.stringify(redigateMessage));
                 if (redigateMessage && redigateMessage.body) {
-                    callback(null, redigateMessage);
+                    //callback(null, redigateMessage);  BB:
+                    isLastMessageProcessed = true;  //BB: stop here for testing ServiceBus and Webjob functional.
                 } else {
                     var errorMessage = 'Body missing in payload';
                     callback(errorMessage, redigateMessage);
@@ -315,11 +316,10 @@ function checkMessageCount(queueName) {
 
 
 
-// BB Todo: devConnStr and queueName must be a parameter as they are unique to each installation.
+// BB: devConnStr and queueName must be a parameter as they are unique to each installation.
 // devConnStr is the connection string to the Service Bus Namespace.
-//var devConnStr = "Endpoint=sb://servicebusnamespace-acme2.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=b6jCVPHPxK0VDTlAkdWHUIa1g0V19oZWESdLG3U42+8=";
-var connStr = process.env.SERVICE_BUS_CONNECTION_STRING; // || devConnStr;
-var queueName = process.env.SERVICE_QUEUE; // || 'servicebusqueue1-acme2';
+var connStr = process.env.SERVICE_BUS_CONNECTION_STRING; // BB: || devConnStr;
+var queueName = process.env.SERVICE_QUEUE; //BB: || 'servicebusqueue1-acme2';
 
 console.log(getCurrentDateTime(), 'Connecting to ' + connStr + ' and queue ' + queueName);
 
@@ -331,7 +331,7 @@ sbService.createQueueIfNotExists(queueName, function(err) {
         console.error(getCurrentDateTime(), 'Failed to create queue: ', err);
     } else {
         isLastMessageProcessed = true;
-        setInterval(checkForMessages.bind(null, sbService, queueName, processMessage.bind(null, sbService)), 200);
+        setInterval(checkForMessages.bind(null, sbService, queueName, processMessage.bind(null, sbService)), 2000);
         //setInterval(checkMessageCount.bind(null, queueName), 1000);
     }
 });
