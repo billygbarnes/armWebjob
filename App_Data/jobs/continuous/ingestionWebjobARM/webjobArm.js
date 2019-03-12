@@ -15,7 +15,7 @@ var azure = require('azure-sb');
 var request = require('request');
 //var log4js = require('log4js');
 
-var gatewayMessageAPI = "Property";
+var gatewayMessageAPI = "livedata";
 var DeviceStatusAPI = "DeviceStatus";
 var historianMessageAPI = "Historian";
 var alarmLogAPI = "Alarm";
@@ -82,7 +82,25 @@ function getCurrentDateTime() {
     return year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second + ":" + millisecond;
 }
 
+/**
+ * This function creates request payload for POST and PUT requests
+ * @param {string} : hostUri -- GatewayAdaptorService URI
+ * @param {string} : methodName -- API name which needs to be called
+ * @param {string} : method -- it will be either POST or PUT
+ * @param {string} : body -- json payload for http request
+ */
+function RequestPayLoad(hostUri, methodName, method, body) {
+    this.url = "https://" + hostUri + "/" + methodName,
+        this.method = method,
+        this.body = body,
+        this.json = true,
+        this.headers = {
+            'Accept': 'application/json',
+            'Accept-Charset': 'utf-8'
+        }
 
+    console.log(this.url);
+};
 
 /**
  * This function makes call to GatewayMessage API with deviceName, appName, tagName and tagValue
@@ -92,8 +110,36 @@ function getCurrentDateTime() {
  */
 function processGatewayMessage(jsonPayLoad, methodName, requestMethod, callback) {
 
-    console.log(jsonPayLoad);
-
+    console.log("processGatewayMessage: ");
+    
+    var hostUri = process.env.GATEWAY_SERVICE_HOST || "gwsvcacme2.azurewebsites.net";
+    var gatewayadapterPayload = new RequestPayLoad(hostUri, methodName, requestMethod, jsonPayLoad);
+    
+    request(gatewayadapterPayload, function(error, response, body) {
+        if (error) {
+            console.error(getCurrentDateTime(), " Error: ", error);
+            callback(error);
+        } else {
+            if (response.statusCode == 200) {
+                console.log(getCurrentDateTime(), " Gateway API call successful for ", jsonPayLoad);
+                var returnMessage = {
+                    message: "Gateway API call successful for ",
+                    jsonPayLoad,
+                    statusCode: response.statusCode
+                };
+                callback(returnMessage);
+            } else {
+                console.error(getCurrentDateTime(), " Gateway API call failed for ", jsonPayLoad);
+                console.error(getCurrentDateTime(), " Error Response = " + JSON.stringify(response));
+                var returnMessage = {
+                    message: "Gateway API call failed for ",
+                    jsonPayLoad,
+                    statusCode: response.statusCode
+                };
+                callback(returnMessage);
+            }
+        }
+    });
 
 };
 
@@ -153,11 +199,12 @@ var processDataPayload = function(body) {
                         tagArray.push(tag);
                     }
                 } else {
-                    var tag = {
-                        Name: key.toString().trim(),
-                        Value: val.toString().trim()
-                    };
-                    tagArray.push(tag);
+                    appInstanceValue = val.toString().trim();
+                    // var tag = {
+                    //     Name: key.toString().trim(),
+                    //     Value: val.toString().trim()
+                    // };
+                    // tagArray.push(tag);
                 }
             }
         }
@@ -189,7 +236,7 @@ var processDataPayload = function(body) {
         } else {
             console.log(getCurrentDateTime(), ' Live data from redigateMessage received: =======================');
             gatewayMethod = gatewayMessageAPI;
-            requestMethod = "PUT";
+            requestMethod = "POST";
         }
 
         processGatewayMessage(jsonPayLoad, gatewayMethod, requestMethod, function(output) {
@@ -255,7 +302,12 @@ function processMessage(sbService, err, redigateMessage) {
                         if(isDeviceOffline || body.d.devIsAlive == undefined){
                             processBirthPayload(body);
                         }
-                        processDataPayload(body);
+                        //processDataPayload(body);
+                        processGatewayMessage(body['d'], 'livedata', 'POST', function(output) {
+                            isLastMessageProcessed = true;
+                            console.log(getCurrentDateTime(), "Call to processGatewayMessage API's is Completed");
+                        });
+
                     }
                     
                 } else {
@@ -287,8 +339,8 @@ function checkForMessages(sbService, queueName, callback) {
             } else {
                 console.log(getCurrentDateTime(), 'Redigate Complete Payload: ', JSON.stringify(redigateMessage));
                 if (redigateMessage && redigateMessage.body) {
-                    //callback(null, redigateMessage);  BB:
-                    isLastMessageProcessed = true;  //BB: stop here for testing ServiceBus and Webjob functional.
+                    callback(null, redigateMessage);  //BB:
+                    //isLastMessageProcessed = true;  //BB: stop here for testing ServiceBus and Webjob functional.
                 } else {
                     var errorMessage = 'Body missing in payload';
                     callback(errorMessage, redigateMessage);
