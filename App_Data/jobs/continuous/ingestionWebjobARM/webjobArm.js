@@ -112,7 +112,7 @@ function processGatewayMessage(jsonPayLoad, methodName, requestMethod, callback)
 
     console.log("processGatewayMessage: ");
     
-    var hostUri = process.env.GATEWAY_SERVICE_HOST || "gwsvcacme2.azurewebsites.net";
+    var hostUri = process.env.GATEWAY_SERVICE_HOST; // || "gwsvcacme2.azurewebsites.net";
     var gatewayadapterPayload = new RequestPayLoad(hostUri, methodName, requestMethod, jsonPayLoad);
     
     request(gatewayadapterPayload, function(error, response, body) {
