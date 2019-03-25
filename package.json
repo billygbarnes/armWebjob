@@ -1,0 +1,16 @@
+{
+    "name": "apitest",
+    "version": "0.0.0",
+    "description": "Webjob for ingestion.",
+    "main": "",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "",
+    "dependencies": {
+      "azure-sb": "^0.10.2",
+      "request": "^2.45.0"
+    }
+  }
+  
