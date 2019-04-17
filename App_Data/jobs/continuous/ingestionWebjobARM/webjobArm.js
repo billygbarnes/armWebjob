@@ -15,6 +15,9 @@ var azure = require('azure-sb');
 var request = require('request');
 //var log4js = require('log4js');
 
+var KeyVault = require('azure-keyvault');
+var msRestAzure = require('ms-rest-azure');
+
 var gatewayMessageAPI = "livedata";
 var DeviceStatusAPI = "DeviceStatus";
 var historianMessageAPI = "Historian";
@@ -367,10 +370,34 @@ function checkMessageCount(queueName) {
 }
 
 
+// Key Vault =============================================
+
+var s;
+var vaultUri = process.env.KVURI;   //"https://bbarmkv.vault.azure.net/";
+
+function getKeyVaultCredentials(){
+    return msRestAzure.loginWithAppServiceMSI({resource: 'https://vault.azure.net'});
+}
+
+function getKeyVaultSecret(credentials) {
+    var keyVaultClient = new KeyVault.KeyVaultClient(credentials);
+    return keyVaultClient.getSecret(vaultUri, 'sbusConnectionString', "");
+}
+
+getKeyVaultCredentials().then(
+    getKeyVaultSecret
+).then(function (secret){
+    //console.log(`Your secret value is: ${secret.value}.`);
+    s = secret.value;
+}).catch(function (err) {
+    throw (err);
+});
+
+// ======================================================
 
 // BB: devConnStr and queueName must be a parameter as they are unique to each installation.
 // devConnStr is the connection string to the Service Bus Namespace.
-var connStr = process.env.SERVICE_BUS_CONNECTION_STRING; // BB: || devConnStr;
+var connStr = s; // process.env.SERVICE_BUS_CONNECTION_STRING; // BB: || devConnStr;
 var queueName = process.env.SERVICE_QUEUE; //BB: || 'servicebusqueue1-acme2';
 
 console.log(getCurrentDateTime(), 'Connecting to ' + connStr + ' and queue ' + queueName);
