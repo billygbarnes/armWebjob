@@ -372,14 +372,17 @@ function checkMessageCount(queueName) {
 
 // Key Vault =============================================
 
-var s;
+var s = "waiting";
 var vaultUri = process.env.KVURI;   //"https://bbarmkv.vault.azure.net/";
+console.log("kvuri: " + vaultUri);
 
 function getKeyVaultCredentials(){
+    console.log("getKeyVaultCredentials");
     return msRestAzure.loginWithAppServiceMSI({resource: 'https://vault.azure.net'});
 }
 
 function getKeyVaultSecret(credentials) {
+    console.log("getKeyVaultSecret");
     var keyVaultClient = new KeyVault.KeyVaultClient(credentials);
     return keyVaultClient.getSecret(vaultUri, 'sbusConnectionString', "");
 }
@@ -389,10 +392,14 @@ getKeyVaultCredentials().then(
 ).then(function (secret){
     //console.log(`Your secret value is: ${secret.value}.`);
     s = secret.value;
+    
+    runJob();
 }).catch(function (err) {
     throw (err);
 });
 
+function runJob(){
+    
 // ======================================================
 
 // BB: devConnStr and queueName must be a parameter as they are unique to each installation.
@@ -413,4 +420,5 @@ sbService.createQueueIfNotExists(queueName, function(err) {
         setInterval(checkForMessages.bind(null, sbService, queueName, processMessage.bind(null, sbService)), 2000);
         //setInterval(checkMessageCount.bind(null, queueName), 1000);
     }
-});
+});    
+}
